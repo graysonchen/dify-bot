@@ -5,7 +5,13 @@ WORKDIR /app/playground
 
 # Copy package files and install all dependencies
 COPY package*.json ./
-RUN npm ci
+# Use npm ci by default
+ARG USE_NPM_CI=true
+RUN if [ "$USE_NPM_CI" = "true" ]; then \
+      npm ci; \
+    else \
+      npm install; \
+    fi
 
 # Copy all other files and build
 COPY . .
@@ -18,7 +24,13 @@ WORKDIR /app/playground
 
 # Install production dependencies only
 COPY package*.json ./
-RUN npm ci --only=production
+# Use npm ci by default
+ARG USE_NPM_CI=true
+RUN if [ "$USE_NPM_CI" = "true" ]; then \
+      npm ci --only=production; \
+    else \
+      npm install --only=production; \
+    fi
 
 # Copy built code and necessary files
 COPY --from=builder /app/playground/dist ./dist

@@ -17,7 +17,7 @@ A unified bot for Discord and Slack and etc. Powered by [Dify.AI](https://dify.a
 DEBUG=debug
 MODE=chat # chat or completion
 ADAPTER=slack
-# Dify 
+# Dify
 DIFY_API_BASE_URL=https://api.dify.ai/v1
 DIFY_API_KEY=app-OxxxxxxxxxxxxxTxxxxxxx
 # Slack
@@ -62,6 +62,23 @@ npm run dev
 ```
 docker build . -t pinkbanana/bot:latest
 docker run -it --env-file .env pinkbanana/bot:latest
+```
+
+You can also use the following pre-built Docker image:
+
+```
+# Pull the latest image
+docker pull graysonchen/dify-bot:latest
+
+# Run the container
+docker run -itd --env-file .env --name=dify-slack-9db graysonchen/dify-bot:latest
+
+# Set container to auto-restart if your need.
+# docker update --restart=always dify-slack-9db
+
+# Stop/Start
+docker stop dify-slack-9db
+docker start dify-slack-9db
 ```
 
 ## License

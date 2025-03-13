@@ -27,14 +27,9 @@ class SlackBot extends Bot {
 
   handleDirectMessage = async ({ message, say, client, event}: { message: any; say: any, client: any, event: any }) => {
     if (message.subtype === undefined || message.subtype === 'bot_message') {
-      console.log("1..................handleHello:",  message);
-
       const inputs = {};
       const query = event.text;
       const user = event.user || '';
-      const reversedText = [...message.text].reverse().join("");
-      // await say(reversedText);
-
       const response = await client.chat.postMessage({
         channel: message.channel,
         thread_ts: message.event_ts,
@@ -43,9 +38,7 @@ class SlackBot extends Bot {
       try {
         if (response.channel && response.ts) {
           this.send(inputs, query, user, async (msg, err) => {
-            console.log('msg.....', msg)
             if (err) {
-              console.log('err.....', err)
               await client.chat.update({
                 channel: response.channel,
                 ts: response.ts,
@@ -66,31 +59,17 @@ class SlackBot extends Bot {
         error(`catch.....err.....${e}`);
       }
     } else {
-      try {
-        console.log("2..................handleHello:",  message);
-        const { text } = message.message
-        if (message.subtype === 'message_changed'){
-          console.log("2..................handleHello:",  message);
-        }
-
-        const isUpdateText = message.previous_message.text !== message.message.text
-
-        console.log('isUpdateText....:', isUpdateText)
-
-        if (isUpdateText && message.subtype === 'message_changed'){
-          // const event_ts = message.event_ts
-          const event_ts = message.message.ts
-          const channel = message.channel
-          this.debouncedChatUpdate(
-            client,
-            channel,
-            event_ts,
-            text || 'sec.., let me thinking. 2'
-          );
-        }
-      } catch (e) {
-        error('Error while sending message to slack');
-        error(`catch.....err.....${e}`);
+      const { text } = message.message
+      const isUpdateText = message.previous_message.text !== message.message.text
+      if (isUpdateText && message.subtype === 'message_changed'){
+        const event_ts = message.message.ts
+        const channel = message.channel
+        this.debouncedChatUpdate(
+          client,
+          channel,
+          event_ts,
+          text || 'sec.., let me thinking.'
+        );
       }
     }
   };

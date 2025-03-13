@@ -20,6 +20,11 @@ class SlackBot extends Bot {
 
   async say() {}
 
+
+  private isSlackFormatMrkdwn(): boolean {
+    return process.env.SLACK_FORMAT === 'mrkdwn';
+  }
+
   private async handleSlackMessage(
     client: any,
     channel: string,
@@ -30,13 +35,12 @@ class SlackBot extends Bot {
     const inputs = {};
     const query = text;
 
-    const isSlackFormatMrkdwn = process.env.SLACK_FORMAT === 'mrkdwn'
     let params = {
       channel: channel,
       thread_ts: thread_ts,
     }
 
-    if (isSlackFormatMrkdwn) {
+    if (this.isSlackFormatMrkdwn()) {
       Object.assign(params, {
         mrkdwn: true,
         markdown_text: `<@${user}>! Thinking...`
@@ -71,12 +75,8 @@ class SlackBot extends Bot {
   ) => {
     try {
       this.send(inputs, query, user, async (msg, err) => {
+        console.log('dify message........', msg)
         if (err) {
-          // await client.chat.update({
-          //   channel,
-          //   ts,
-          //   text: 'Error while sending message to dify.ai'
-          // });
           msg = 'Error while sending message to dify.ai'
           this.debouncedChatUpdate(
             client,
@@ -127,16 +127,16 @@ class SlackBot extends Bot {
 
   debouncedChatUpdate = debounce(async (client, channel, ts, text) => {
     const params = { channel, ts };
-    const isSlackFormatMrkdwn = process.env.SLACK_FORMAT === 'mrkdwn'
+
     try {
-      if (isSlackFormatMrkdwn) {
+      if (this.isSlackFormatMrkdwn()) {
         Object.assign(params, {
           mrkdwn: true,
-          markdown_text: text
+          markdown_text: text,
         });
       } else {
         Object.assign(params, {
-          text: text
+          text: text,
         });
       }
       await client.chat.update(params);
@@ -155,6 +155,29 @@ class SlackBot extends Bot {
       event.user || ''
     );
   };
+
+  // handleHello = async ({ message, say, event, client }: { event: any; client: any; message: any; say: any; }) => {
+  //   await say({
+  //     blocks: [
+  //       {
+  //         "type": "section",
+  //         "text": {
+  //           "type": "mrkdwn",
+  //           "text": `Hey there <@${message.user}>!`
+  //         },
+  //         "accessory": {
+  //           "type": "button",
+  //           "text": {
+  //             "type": "plain_text",
+  //             "text": "Click Me"
+  //           },
+  //           "action_id": "button_click"
+  //         }
+  //       }
+  //     ],
+  //     text: `Hey there <@${message.user}>!`
+  //   });
+  // };
 
   async hear() {
     // this.app.message('hello', this.handleHello);

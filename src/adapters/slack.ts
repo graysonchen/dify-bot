@@ -125,11 +125,14 @@ class SlackBot extends Bot {
     }
   };
 
+  prepareSlackMessageText = (text: string) => text.replace(/\r?\n{2,}/g, '\n');
+
   debouncedChatUpdate = debounce(async (client, channel, ts, text) => {
     const params = { channel, ts };
 
     try {
       if (this.isSlackFormatMrkdwn()) {
+        text = this.prepareSlackMessageText(text);
         Object.assign(params, {
           mrkdwn: true,
           markdown_text: text,

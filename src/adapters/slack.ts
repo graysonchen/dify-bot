@@ -20,45 +20,96 @@ class SlackBot extends Bot {
 
   async say() {}
 
-  handleHello = async ({ message, say }: { message: any; say: any }) => {
-    console.log(message);
-    await say(`Hey there!`);
-  };
+  private async handleSlackMessage(
+    client: any,
+    channel: string,
+    thread_ts: string,
+    text: string,
+    user: string
+  ) {
+    const inputs = {};
+    const query = text;
 
-  handleDirectMessage = async ({ message, say, client, event}: { message: any; say: any, client: any, event: any }) => {
-    if (message.subtype === undefined || message.subtype === 'bot_message') {
-      const inputs = {};
-      const query = event.text;
-      const user = event.user || '';
-      const response = await client.chat.postMessage({
-        channel: message.channel,
-        thread_ts: message.event_ts,
+    const isSlackFormatMrkdwn = process.env.SLACK_FORMAT === 'mrkdwn'
+    let params = {
+      channel: channel,
+      thread_ts: thread_ts,
+    }
+
+    if (isSlackFormatMrkdwn) {
+      Object.assign(params, {
+        mrkdwn: true,
+        markdown_text: `<@${user}>! Thinking...`
+      });
+    } else {
+      Object.assign(params, {
         text: `<@${user}>! Thinking...`
       });
-      try {
-        if (response.channel && response.ts) {
-          this.send(inputs, query, user, async (msg, err) => {
-            if (err) {
-              await client.chat.update({
-                channel: response.channel,
-                ts: response.ts,
-                text: 'Error while sending message to dify.ai'
-              });
-            } else {
-              this.debouncedChatUpdate(
-                client,
-                response.channel,
-                response.ts,
-                msg || 'sec.., let me thinking.'
-              );
-            }
-          });
+    }
+
+    const response = await client.chat.postMessage(params);
+
+    if (response.channel && response.ts) {
+      await this.handleMessageResponse(
+        client,
+        inputs,
+        query,
+        user,
+        response.channel,
+        response.ts
+      );
+    }
+  }
+
+  private handleMessageResponse = async (
+    client: any,
+    inputs: any,
+    query: string,
+    user: string,
+    channel: string,
+    ts: string
+  ) => {
+    try {
+      this.send(inputs, query, user, async (msg, err) => {
+        if (err) {
+          // await client.chat.update({
+          //   channel,
+          //   ts,
+          //   text: 'Error while sending message to dify.ai'
+          // });
+          msg = 'Error while sending message to dify.ai'
+          this.debouncedChatUpdate(
+            client,
+            channel,
+            ts,
+            msg
+          );
+        } else {
+          this.debouncedChatUpdate(
+            client,
+            channel,
+            ts,
+            msg || 'sec.., let me thinking.'
+          );
         }
-      } catch (e) {
-        error('Error while sending message to slack');
-        error(`catch.....err.....${e}`);
-      }
+      });
+    } catch (e) {
+      error('Error while sending message to slack');
+      error(`${e}`);
+    }
+  };
+
+  handleDirectMessage = async ({ message, client, event}: { message: any; client: any; event: any }) => {
+    if (message.subtype === undefined || message.subtype === 'bot_message') {
+      await this.handleSlackMessage(
+        client,
+        message.channel,
+        message.event_ts,
+        event.text,
+        event.user || ''
+      );
     } else {
+      console.log("handleDirectMessage.....message", message)
       const { text } = message.message
       const isUpdateText = message.previous_message.text !== message.message.text
       if (isUpdateText && message.subtype === 'message_changed'){
@@ -93,42 +144,16 @@ class SlackBot extends Bot {
       error('debouncedChatUpdate: Error while sending message to slack');
       error(`catch.....err.....${e}`);
     }
-  }, 100);
+  }, 500);
 
   handleAppMention = async ({ event, client }: { event: any; client: any }) => {
-    const inputs = {};
-    const query = event.text;
-    const user = event.user || '';
-
-    const response = await client.chat.postMessage({
-      channel: event.channel,
-      thread_ts: event.ts,
-      text: `<@${user}>! Thinking...`
-    });
-
-    try {
-      if (response.channel && response.ts) {
-        this.send(inputs, query, user, async (msg, err) => {
-          if (err) {
-            await client.chat.update({
-              channel: response.channel,
-              ts: response.ts,
-              text: 'Error while sending message to dify.ai'
-            });
-          } else {
-            this.debouncedChatUpdate(
-              client,
-              response.channel,
-              response.ts,
-              msg || 'Unknown response'
-            );
-          }
-        });
-      }
-    } catch (e) {
-      error('Error while sending message to slack');
-      error(`${e}`);
-    }
+    await this.handleSlackMessage(
+      client,
+      event.channel,
+      event.ts,
+      event.text,
+      event.user || ''
+    );
   };
 
   async hear() {

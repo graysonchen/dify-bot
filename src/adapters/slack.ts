@@ -20,7 +20,6 @@ class SlackBot extends Bot {
 
   async say() {}
 
-
   private isSlackFormatMrkdwn(): boolean {
     return process.env.SLACK_FORMAT === 'mrkdwn';
   }
@@ -75,7 +74,6 @@ class SlackBot extends Bot {
   ) => {
     try {
       this.send(inputs, query, user, async (msg, err) => {
-        console.log('dify message........', msg)
         if (err) {
           msg = 'Error while sending message to dify.ai'
           this.debouncedChatUpdate(
@@ -109,7 +107,6 @@ class SlackBot extends Bot {
         event.user || ''
       );
     } else {
-      console.log("handleDirectMessage.....message", message)
       const { text } = message.message
       const isUpdateText = message.previous_message.text !== message.message.text
       if (isUpdateText && message.subtype === 'message_changed'){
@@ -158,29 +155,6 @@ class SlackBot extends Bot {
       event.user || ''
     );
   };
-
-  // handleHello = async ({ message, say, event, client }: { event: any; client: any; message: any; say: any; }) => {
-  //   await say({
-  //     blocks: [
-  //       {
-  //         "type": "section",
-  //         "text": {
-  //           "type": "mrkdwn",
-  //           "text": `Hey there <@${message.user}>!`
-  //         },
-  //         "accessory": {
-  //           "type": "button",
-  //           "text": {
-  //             "type": "plain_text",
-  //             "text": "Click Me"
-  //           },
-  //           "action_id": "button_click"
-  //         }
-  //       }
-  //     ],
-  //     text: `Hey there <@${message.user}>!`
-  //   });
-  // };
 
   async hear() {
     // this.app.message('hello', this.handleHello);

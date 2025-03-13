@@ -20,6 +20,8 @@ class SlackBot extends Bot {
 
   async say() {}
 
+  private welcomeMessage = 'Hello! Let me think for a moment.'
+
   private isSlackFormatMrkdwn(): boolean {
     return process.env.SLACK_FORMAT === 'mrkdwn';
   }
@@ -34,23 +36,12 @@ class SlackBot extends Bot {
     const inputs = {};
     const query = text;
 
-    let params = {
+
+    const response = await client.chat.postMessage({
       channel: channel,
       thread_ts: thread_ts,
-    }
-
-    if (this.isSlackFormatMrkdwn()) {
-      Object.assign(params, {
-        mrkdwn: true,
-        markdown_text: `<@${user}>! Thinking...`
-      });
-    } else {
-      Object.assign(params, {
-        text: `<@${user}>! Thinking...`
-      });
-    }
-
-    const response = await client.chat.postMessage(params);
+      text: `<@${user}>! Thinking...`
+    });
 
     if (response.channel && response.ts) {
       await this.handleMessageResponse(
@@ -87,7 +78,7 @@ class SlackBot extends Bot {
             client,
             channel,
             ts,
-            msg || 'sec.., let me thinking.'
+            msg || this.welcomeMessage
           );
         }
       });
@@ -116,7 +107,7 @@ class SlackBot extends Bot {
           client,
           channel,
           event_ts,
-          text || 'sec.., let me thinking.'
+          text || this.welcomeMessage
         );
       }
     }

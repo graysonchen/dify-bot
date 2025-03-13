@@ -66,7 +66,7 @@ class SlackBot extends Bot {
     try {
       this.send(inputs, query, user, async (msg, err) => {
         if (err) {
-          msg = 'Error while sending message to dify.ai'
+          msg = 'Error while sending message to AI assistant, please try again later.'
           this.debouncedChatUpdate(
             client,
             channel,
